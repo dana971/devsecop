@@ -1,8 +1,3 @@
-name: Docker CI
-on:
- push:
-   branches:
-     - master
 jobs:
  build:
    runs-on: ubuntu-latest
@@ -13,3 +8,13 @@ jobs:
        run: docker build -t front-image ./frontend
      - name: Build backend image
        run: docker build -t back-image ./backend
+     - name: Scan frontend image with Trivy
+       uses: aquasecurity/trivy-action@master
+       with:
+         image-ref: front-image
+         severity: HIGH,CRITICAL
+     - name: Scan backend image with Trivy
+       uses: aquasecurity/trivy-action@master
+       with:
+         image-ref: back-image
+         severity: HIGH,CRITICAL
