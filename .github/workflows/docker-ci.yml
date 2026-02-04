@@ -1,25 +1,45 @@
-name: Docker CI
+name: Docker CI & Push GHCR
 on:
  push:
    branches:
      - master
 jobs:
- build:
+ build-scan-push:
    runs-on: ubuntu-latest
    steps:
      - name: Checkout repository
        uses: actions/checkout@v4
+     - name: Login to GHCR
+       uses: docker/login-action@v2
+       with:
+         username: ${{ github.actor }}
+         password: ${{ secrets.GITHUB_TOKEN }}
      - name: Build frontend image
-       run: docker build -t front-image ./frontend
+       run: docker build -t ghcr.io/${{ github.repository }}/front-test:latest ./frontend
      - name: Build backend image
-       run: docker build -t back-image ./backend
+       run: docker build -t ghcr.io/${{ github.repository }}/back-test:latest ./backend
      - name: Scan frontend image with Trivy
        uses: aquasecurity/trivy-action@master
        with:
-         image-ref: front-image
-         everity: HIGH,CRITICAL
+         image-ref: ghcr.io/${{ github.repository }}/front-test:latest
+         severity: HIGH,CRITICAL
      - name: Scan backend image with Trivy
        uses: aquasecurity/trivy-action@master
        with:
-        image-ref: back-image
-        severity: HIGH,CRITICAL
+         image-ref: ghcr.io/${{ github.repository }}/back-test:latest
+         severity: HIGH,CRITICAL
+     - name: Push frontend image
+       run: docker push ghcr.io/${{ github.repository }}/front-test:latest
+     - name: Push backend image
+       run: docker push ghcr.io/${{ github.repository }}/back-test:latest
+     - name: Scan sonarqube
+     - uses: SonarSource/sonarqube-scan-action@v6
+       env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      # If you wish to fail your job when the Quality Gate is red, uncomment the
+      # following lines. This would typically be used to fail a deployment.
+      # - uses: SonarSource/sonarqube-quality-gate-action@v1
+      #   timeout-minutes: 5
+      #   env:
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
