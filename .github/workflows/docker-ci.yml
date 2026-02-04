@@ -1,3 +1,8 @@
+name: Docker CI
+on:
+ push:
+   branches:
+     - master
 jobs:
  build:
    runs-on: ubuntu-latest
@@ -12,9 +17,9 @@ jobs:
        uses: aquasecurity/trivy-action@master
        with:
          image-ref: front-image
-         severity: HIGH,CRITICAL
+         everity: HIGH,CRITICAL
      - name: Scan backend image with Trivy
        uses: aquasecurity/trivy-action@master
        with:
-         image-ref: back-image
-         severity: HIGH,CRITICAL
+        image-ref: back-image
+        severity: HIGH,CRITICAL
